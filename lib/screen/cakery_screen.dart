@@ -1,181 +1,187 @@
-import 'package:cakeshop_ui/data/cake_provider.dart';
-import 'package:flutter/material.dart';
-import 'package:cakeshop_ui/data/cake.dart';
-import 'package:cakeshop_ui/screen/cakery_detail.dart';
 import 'package:cakeshop_ui/data/order_provider.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 class CakeryScreen extends StatelessWidget {
-  final String subMenu;
-  final String isFavorite;
+  final List<Map<String, dynamic>> subMenuList;
 
-  const CakeryScreen({
-    super.key,
-    this.subMenu = '',
-    this.isFavorite = '',
-  });
+  const CakeryScreen({super.key, required this.subMenuList});
 
   @override
   Widget build(BuildContext context) {
-    List<Cake> filteredCakes = isFavorite == 'true'
-        ? listCakes.where((cake) => cake.isFavorite == true).toList()
-        : listCakes.where((cake) => cake.subMenu == subMenu).toList();
-
     return Scaffold(
       backgroundColor: Colors.white,
-      body: ListView(
-        children: [
-          SizedBox(height: 15),
-          SizedBox(
-            width: MediaQuery.of(context).size.width - 40,
-            height: MediaQuery.of(context).size.height - 50,
-            child: GridView.builder(
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 10,
-                  mainAxisSpacing: 15,
-                  childAspectRatio: 0.8),
-              itemBuilder: (context, index) {
-                return CakeCard(cake: filteredCakes[index]);
-              },
-              itemCount: filteredCakes.length,
-            ),
+      body: Padding(
+        padding: const EdgeInsets.all(10),
+        child: GridView.builder(
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 10,
+            mainAxisSpacing: 15,
+            childAspectRatio: 0.7,
           ),
-          SizedBox(height: 15),
-        ],
+          itemCount: subMenuList.length,
+          itemBuilder: (context, index) {
+            return SubMenuCard(subMenu: subMenuList[index]);
+          },
+        ),
       ),
     );
   }
 }
 
-class CakeCard extends StatelessWidget {
-  final Cake cake;
+class SubMenuCard extends StatefulWidget {
+  final Map<String, dynamic> subMenu;
 
-  const CakeCard({super.key, required this.cake});
+  const SubMenuCard({super.key, required this.subMenu});
 
+  @override
+  _SubMenuCardState createState() => _SubMenuCardState();
+}
+
+class _SubMenuCardState extends State<SubMenuCard> {
   @override
   Widget build(BuildContext context) {
     final orderProvider = Provider.of<OrderProvider>(context);
-    int quantity = orderProvider.getQuantity(cake);
-    // final cakeProvider = Provider.of<CakeProvider>(context);
 
-    return Padding(
-      padding: EdgeInsets.all(5),
-      child: InkWell(
-        onTap: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) {
-                return CakeryDetail(
-                  assetPath: cake.imageUrl,
-                  cookiePrice: cake.price,
-                  cookieName: cake.name,
-                );
-              },
-            ),
-          );
-        },
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(15),
-            color: Colors.white,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.5),
-                spreadRadius: 3,
-                blurRadius: 5,
-              )
-            ],
-          ),
-          child: Column(
-            children: [
-              Padding(
-                padding: EdgeInsets.all(5),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    cake.isFavorite
-                        ? Icon(Icons.favorite, color: Colors.orange)
-                        : Icon(Icons.favorite_border, color: Colors.orange),
-                  ],
-                ),
-              ),
-              Hero(
-                tag: cake.imageUrl,
-                child: Container(
-                  height: MediaQuery.of(context).size.height * 0.2,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                    image: DecorationImage(
-                      image: AssetImage(cake.imageUrl),
-                      fit: BoxFit.contain,
+    // Ambil jumlah quantity dari provider
+    int quantity = orderProvider.getQuantity(widget.subMenu);
+
+    return InkWell(
+      onTap: () {
+        // Aksi saat submenu dipilih
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(15),
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.5),
+              spreadRadius: 3,
+              blurRadius: 5,
+            )
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            widget.subMenu['thumbnail'] != null
+                ? Expanded(
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(15),
+                        topRight: Radius.circular(15),
+                      ),
+                      child: Image.network(
+                        widget.subMenu['thumbnail'],
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  )
+                : Expanded(
+                    child: ClipRRect(
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(15),
+                          topRight: Radius.circular(15),
+                        ),
+                        child: Image.asset(
+                          'assets/box1.jpeg',
+                          fit: BoxFit.cover,
+                        )),
+                  ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text(
+                    widget.subMenu['name'] ?? 'Unknown',
+                    style: const TextStyle(
+                      color: Colors.black,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    'Price: ${widget.subMenu['price'] ?? 'N/A'}',
+                    style: const TextStyle(
+                      color: Colors.green,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                ),
-              ),
-              SizedBox(height: 7),
-              Text(
-                'Rp ${cake.price}',
-                style: TextStyle(
-                  color: Colors.orange,
-                  fontFamily: 'Varela',
-                  fontSize: 14,
-                ),
-              ),
-              Text(
-                cake.name,
-                style: TextStyle(
-                  color: Color.fromARGB(255, 53, 53, 53),
-                  fontFamily: 'Varela',
-                  fontSize: 14,
-                ),
-              ),
-              Padding(
-                padding: EdgeInsets.all(8.0),
-                child: Container(height: 1, color: Colors.grey),
-              ),
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 5),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    GestureDetector(
-                      onTap: () {
-                        if (quantity > 0) {
-                          orderProvider.updateQuantity(cake, quantity - 1);
-                        }
-                      },
-                      child: Icon(
-                        Icons.remove_circle_outline,
-                        color: Colors.orange,
-                        size: 16,
-                      ),
+                  const SizedBox(height: 10),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 5),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.shopping_basket,
+                              color: Colors.orange,
+                              size: 16,
+                            ),
+                            SizedBox(width: 6),
+                            Text(
+                              'Beli',
+                              style: TextStyle(
+                                color: Colors.orange,
+                                fontFamily: 'Varela',
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(width: 15),
+                        Row(
+                          children: [
+                            GestureDetector(
+                              onTap: () {
+                                if (quantity > 0) {
+                                  orderProvider.updateQuantity(
+                                      widget.subMenu, quantity - 1);
+                                }
+                              },
+                              child: Icon(
+                                Icons.remove_circle_outline,
+                                color: Colors.orange,
+                                size: 16,
+                              ),
+                            ),
+                            SizedBox(width: 6),
+                            Text(
+                              '$quantity',
+                              style: TextStyle(
+                                color: Colors.orange,
+                                fontFamily: 'Varela',
+                                fontSize: 12,
+                              ),
+                            ),
+                            SizedBox(width: 6),
+                            GestureDetector(
+                              onTap: () {
+                                orderProvider.addOrder(widget.subMenu, 1);
+                              },
+                              child: Icon(
+                                Icons.add_circle_outline,
+                                color: Colors.orange,
+                                size: 16,
+                              ),
+                            ),
+                          ],
+                        )
+                      ],
                     ),
-                    SizedBox(width: 6),
-                    Text(
-                      '$quantity',
-                      style: TextStyle(
-                        color: Colors.orange,
-                        fontFamily: 'Varela',
-                        fontSize: 12,
-                      ),
-                    ),
-                    SizedBox(width: 6),
-                    GestureDetector(
-                      onTap: () {
-                        orderProvider.addOrder(cake, 1);
-                      },
-                      child: Icon(
-                        Icons.add_circle_outline,
-                        color: Colors.orange,
-                        size: 16,
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

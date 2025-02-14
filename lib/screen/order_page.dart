@@ -18,12 +18,15 @@ class OrderPage extends StatelessWidget {
                 return Card(
                   margin: EdgeInsets.all(10),
                   child: ListTile(
-                    leading: Image.asset(order['cake'].imageUrl, width: 50),
-                    title: Text(order['cake'].name),
+                    leading: order['cake']['thumbnail'] != null
+                        ? Image.network(order['cake']['thumbnail'],
+                            width: 50, height: 50, fit: BoxFit.cover)
+                        : Icon(Icons.image, size: 50, color: Colors.grey),
+                    title: Text(order['cake']['name'] ?? "Nama tidak tersedia"),
                     subtitle: Text(
-                        "Rp ${order['cake'].price} x ${order['quantity']}"),
+                        "Rp ${order['cake']['price']} x ${order['quantity']}"),
                     trailing: Text(
-                      "Rp ${(double.parse(order['cake'].price) * order['quantity']).toStringAsFixed(0)}",
+                      "Rp ${(double.parse(order['cake']['price'].toString()) * order['quantity']).toStringAsFixed(0)}",
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),
