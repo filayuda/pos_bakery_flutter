@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:cakeshop_ui/api/api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:cakeshop_ui/screen/cakery_screen.dart';
+import 'package:cakeshop_ui/home.dart'; // Untuk refreshHomeNotifier
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -10,42 +11,64 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeState();
 }
 
-class _HomeState extends State<HomeScreen> with SingleTickerProviderStateMixin {
+class _HomeState extends State<HomeScreen> with TickerProviderStateMixin {
+  late Future<List<Map<String, dynamic>>> _futureKategori;
   TabController? _tabController;
-  List<Map<String, dynamic>> _listKategori = [];
   Map<int, List<Map<String, dynamic>>> _menuByCategory = {};
+  List<Map<String, dynamic>> _kategoriList = [];
 
   @override
   void initState() {
     super.initState();
-    fetchListKategori();
+    _loadData(); // Load pertama kali
+
+    /// **Tambahkan listener untuk merespon perubahan dari FavoritePage**
+    refreshHomeNotifier.addListener(() {
+      if (refreshHomeNotifier.value) {
+        _loadData(); // Reload data
+        refreshHomeNotifier.value = false; // Reset notifier
+      }
+    });
   }
 
-  void fetchListKategori() async {
-    try {
-      List<Map<String, dynamic>> listKategori = await fetchKategori();
-      setState(() {
-        _listKategori = listKategori;
-        _tabController?.dispose();
-        _tabController =
-            TabController(length: _listKategori.length, vsync: this);
-      });
+  void _loadData() {
+    _futureKategori = fetchListKategori();
+    _futureKategori.then((kategoriList) {
+      if (mounted) {
+        setState(() {
+          _kategoriList = kategoriList;
 
-      for (var kategori in _listKategori) {
-        fetchMenuByCategory(kategori['id']);
+          // **Pastikan untuk me-reset TabController sebelum membuat yang baru**
+          _tabController?.dispose();
+          _tabController =
+              TabController(length: kategoriList.length, vsync: this);
+        });
+
+        // **Ambil menu berdasarkan kategori**
+        for (var kategori in kategoriList) {
+          fetchMenuByCategory(kategori['id']);
+        }
       }
+    });
+  }
+
+  Future<List<Map<String, dynamic>>> fetchListKategori() async {
+    try {
+      return await fetchKategori();
     } catch (e) {
       print('Error fetching categories: $e');
+      return [];
     }
   }
 
   Future<void> fetchMenuByCategory(int categoryId) async {
     try {
       List<Map<String, dynamic>> menuList = await fetchMenu(categoryId);
-      print('fetchMenuByCategory : $menuList');
-      setState(() {
-        _menuByCategory[categoryId] = menuList;
-      });
+      if (mounted) {
+        setState(() {
+          _menuByCategory[categoryId] = menuList;
+        });
+      }
     } catch (e) {
       print('Error fetching menu: $e');
     }
@@ -60,25 +83,35 @@ class _HomeState extends State<HomeScreen> with SingleTickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _tabController == null
-          ? const Center(child: CircularProgressIndicator())
-          : Column(
-              children: [
-                const Padding(
-                  padding: EdgeInsets.only(left: 20, top: 20),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      'Menu',
-                      style: TextStyle(
-                        fontFamily: 'Varela',
-                        fontSize: 30,
-                        fontWeight: FontWeight.bold,
-                      ),
+      body: FutureBuilder<List<Map<String, dynamic>>>(
+        future: _futureKategori,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text("Error: ${snapshot.error}"));
+          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(child: Text("Tidak ada kategori tersedia."));
+          }
+
+          return Column(
+            children: [
+              const Padding(
+                padding: EdgeInsets.only(left: 20, top: 20),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Menu',
+                    style: TextStyle(
+                      fontFamily: 'Varela',
+                      fontSize: 30,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
-                const SizedBox(height: 10),
+              ),
+              const SizedBox(height: 10),
+              if (_tabController != null)
                 TabBar(
                   controller: _tabController,
                   indicatorColor: Colors.transparent,
@@ -86,7 +119,7 @@ class _HomeState extends State<HomeScreen> with SingleTickerProviderStateMixin {
                   isScrollable: true,
                   labelPadding: const EdgeInsets.symmetric(horizontal: 10),
                   unselectedLabelColor: Colors.grey,
-                  tabs: _listKategori.map((kategori) {
+                  tabs: _kategoriList.map((kategori) {
                     return Tab(
                       key: Key('tab_${kategori['id']}'),
                       child: Text(
@@ -97,23 +130,28 @@ class _HomeState extends State<HomeScreen> with SingleTickerProviderStateMixin {
                     );
                   }).toList(),
                 ),
-                Expanded(
-                  child: TabBarView(
-                    controller: _tabController,
-                    children: _listKategori.map((kategori) {
-                      int categoryId = kategori['id'];
-                      List<Map<String, dynamic>> menuList =
-                          _menuByCategory[categoryId] ?? [];
-                      return CakeryScreen(subMenuList: menuList);
-                    }).toList(),
-                  ),
-                ),
-              ],
-            ),
+              Expanded(
+                child: _tabController == null
+                    ? const Center(child: CircularProgressIndicator())
+                    : TabBarView(
+                        controller: _tabController,
+                        children: _kategoriList.map((kategori) {
+                          int categoryId = kategori['id'];
+                          List<Map<String, dynamic>> menuList =
+                              _menuByCategory[categoryId] ?? [];
+                          return CakeryScreen(subMenuList: menuList);
+                        }).toList(),
+                      ),
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 }
 
+/// **🔥 Kode API yang Diperbaiki**
 Future<List<Map<String, dynamic>>> fetchKategori(
     {int perPage = 1000, int page = 1}) async {
   try {

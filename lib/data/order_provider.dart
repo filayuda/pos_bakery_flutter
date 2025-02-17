@@ -2,16 +2,22 @@ import 'package:flutter/material.dart';
 
 class OrderProvider with ChangeNotifier {
   List<Map<String, dynamic>> _orders = [];
+
   List<Map<String, dynamic>> get orders => _orders;
 
-  void addOrder(Map<String, dynamic> cake, int quantity) {
+  void addOrder(Map<String, dynamic> cake, int quantity, {String note = "-"}) {
     final index =
         _orders.indexWhere((order) => order['cake']['id'] == cake['id']);
 
     if (index != -1) {
       _orders[index]['quantity'] += quantity;
+      _orders[index]['note'] = note;
     } else {
-      _orders.add({'cake': cake, 'quantity': quantity});
+      _orders.add({
+        'cake': cake,
+        'quantity': quantity,
+        'note': note,
+      });
     }
 
     notifyListeners();
@@ -39,5 +45,22 @@ class OrderProvider with ChangeNotifier {
     }
 
     notifyListeners();
+  }
+
+  void clearOrders() {
+    _orders.clear();
+    notifyListeners();
+  }
+
+  Map<String, dynamic> generateOrderPayload() {
+    return {
+      "menus": _orders.map((order) {
+        return {
+          "id": order["cake"]["id"],
+          "qty": order["quantity"],
+          "note": order["note"],
+        };
+      }).toList()
+    };
   }
 }

@@ -5,6 +5,9 @@ import 'package:cakeshop_ui/screen/order_page.dart';
 import 'package:cakeshop_ui/profile_pagetest.dart';
 import 'package:flutter/material.dart';
 
+/// Notifier untuk mendeteksi perubahan data dari FavoritePage
+final ValueNotifier<bool> refreshHomeNotifier = ValueNotifier(false);
+
 class Home extends StatefulWidget {
   const Home({super.key});
 
@@ -15,9 +18,12 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
   int _selectedIndex = 0;
 
+  /// **Gunakan Stateful Widgets untuk memastikan rebuild saat data berubah**
   final List<Widget> _pages = [
-    HomeScreen(),
-    FavoritePage(),
+    HomeScreen(), // HomeScreen akan mendengarkan perubahan data
+    FavoritePage(onDataChanged: () {
+      refreshHomeNotifier.value = true; // Trigger refresh
+    }),
     ProfilePagetest(),
     OrderPage(),
   ];
@@ -35,7 +41,7 @@ class _HomeState extends State<Home> {
       case 1:
         return "Master Page";
       case 2:
-        return "Profile Page";
+        return "Pembayaran Page";
       case 3:
         return "Order Page";
       default:
@@ -61,7 +67,8 @@ class _HomeState extends State<Home> {
           BottomNavigationBarItem(
               icon: Icon(Icons.shopping_bag_rounded), label: "Products"),
           BottomNavigationBarItem(icon: Icon(Icons.settings), label: "Master"),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.person), label: "Pembayaran"),
           BottomNavigationBarItem(
               icon: Icon(Icons.shopping_bag), label: "Order"),
         ],
