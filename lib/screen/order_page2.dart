@@ -1,7 +1,9 @@
 import 'package:cakeshop_ui/api/api_service.dart';
 import 'package:cakeshop_ui/data/order_provider.dart';
+import 'package:cakeshop_ui/screen/profile_page.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class OrderPage extends StatelessWidget {
@@ -9,13 +11,6 @@ class OrderPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final orderProvider = Provider.of<OrderProvider>(context);
     final orders = orderProvider.orders;
-
-    // Calculate total price
-    double totalPrice = 0;
-    for (var order in orders) {
-      totalPrice +=
-          double.parse(order['cake']['price'].toString()) * order['quantity'];
-    }
 
     return Scaffold(
       appBar: AppBar(title: Text("Pesanan Saya")),
@@ -55,23 +50,6 @@ class OrderPage extends StatelessWidget {
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                         IconButton(
-                          icon: Icon(Icons.remove, color: Colors.red),
-                          onPressed: () {
-                            if (order['quantity'] > 1) {
-                              orderProvider.updateQuantity(
-                                  order['cake'], order['quantity'] - 1);
-                            }
-                          },
-                        ),
-                        Text(order['quantity'].toString()),
-                        IconButton(
-                          icon: Icon(Icons.add, color: Colors.green),
-                          onPressed: () {
-                            orderProvider.updateQuantity(
-                                order['cake'], order['quantity'] + 1);
-                          },
-                        ),
-                        IconButton(
                           icon: Icon(Icons.delete, color: Colors.red),
                           onPressed: () {
                             orderProvider.updateQuantity(order['cake'], 0);
@@ -83,19 +61,6 @@ class OrderPage extends StatelessWidget {
                 );
               },
             ),
-      bottomNavigationBar: orders.isNotEmpty
-          ? Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                "Total Harga: Rp ${totalPrice.toStringAsFixed(0)}",
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.red,
-                ),
-              ),
-            )
-          : null,
       floatingActionButton: orders.isNotEmpty
           ? FloatingActionButton.extended(
               onPressed: () => sendOrder(context),

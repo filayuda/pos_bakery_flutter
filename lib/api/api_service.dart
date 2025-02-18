@@ -28,11 +28,13 @@ class ApiService {
     Map<String, String>? headers,
     int perPage = 1000,
     int page = 1,
+    Map<String, String>? queryParameters,
   }) async {
     final Uri url = Uri.parse('$baseUrl$endpoint').replace(
       queryParameters: {
         'per_page': perPage.toString(),
         'page': page.toString(),
+        if (queryParameters != null) ...queryParameters,
       },
     );
 

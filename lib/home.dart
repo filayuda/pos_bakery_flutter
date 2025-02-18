@@ -5,7 +5,6 @@ import 'package:cakeshop_ui/screen/order_page.dart';
 import 'package:cakeshop_ui/profile_pagetest.dart';
 import 'package:flutter/material.dart';
 
-/// Notifier untuk mendeteksi perubahan data dari FavoritePage
 final ValueNotifier<bool> refreshHomeNotifier = ValueNotifier(false);
 
 class Home extends StatefulWidget {
@@ -18,11 +17,10 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
   int _selectedIndex = 0;
 
-  /// **Gunakan Stateful Widgets untuk memastikan rebuild saat data berubah**
   final List<Widget> _pages = [
-    HomeScreen(), // HomeScreen akan mendengarkan perubahan data
+    HomeScreen(),
     FavoritePage(onDataChanged: () {
-      refreshHomeNotifier.value = true; // Trigger refresh
+      refreshHomeNotifier.value = true;
     }),
     ProfilePagetest(),
     OrderPage(),
