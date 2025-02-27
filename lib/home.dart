@@ -5,24 +5,35 @@ import 'package:cakeshop_ui/screen/order_page.dart';
 import 'package:cakeshop_ui/profile_pagetest.dart';
 import 'package:flutter/material.dart';
 
+/// **Notifier untuk refresh halaman tertentu**
 final ValueNotifier<bool> refreshHomeNotifier = ValueNotifier(false);
 
 class Home extends StatefulWidget {
-  const Home({super.key});
+  final int? initialIndex; // Hanya opsional, bukan final
+
+  const Home({super.key, this.initialIndex}); // Default tanpa nilai awal
 
   @override
   _HomeState createState() => _HomeState();
 }
 
 class _HomeState extends State<Home> {
-  int _selectedIndex = 0;
+  late int _selectedIndex;
+
+  @override
+  void initState() {
+    super.initState();
+
+    /// **Gunakan initialIndex hanya jika ada nilainya, jika tidak, default ke 0**
+    _selectedIndex = widget.initialIndex ?? 0;
+  }
 
   final List<Widget> _pages = [
     HomeScreen(),
     FavoritePage(onDataChanged: () {
       refreshHomeNotifier.value = true;
     }),
-    ProfilePagetest(),
+    ProfilePagetest(), // Profile Page (Index 2)
     OrderPage(),
   ];
 

@@ -1,5 +1,6 @@
 import 'package:cakeshop_ui/api/api_service.dart';
 import 'package:cakeshop_ui/data/order_provider.dart';
+import 'package:cakeshop_ui/home.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'dart:convert';
@@ -125,6 +126,10 @@ class OrderPage extends StatelessWidget {
           ),
         );
         orderProvider.clearOrders();
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => Home(initialIndex: 2)),
+        );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
